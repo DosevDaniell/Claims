@@ -7,6 +7,7 @@ namespace Claims.Application.Validation;
 public sealed class ClaimValidator : IClaimValidator
 {
     private readonly IClock _clock;
+    private const decimal MaxAmount = 100_000m;
 
     public ClaimValidator(IClock clock)
     {
@@ -16,7 +17,7 @@ public sealed class ClaimValidator : IClaimValidator
     public void ValidateOrThrow(CreateClaimRequest request)
     {
         var errors = new List<string>();
-
+        
         if (string.IsNullOrWhiteSpace(request.Description))
             errors.Add("Description is required.");
 
@@ -29,8 +30,8 @@ public sealed class ClaimValidator : IClaimValidator
             request.IncidentDate > request.Cover.CoverageEnd)
             errors.Add("Incident must be within cover period.");
 
-        if (request.DamageCost > 100000)
-            errors.Add("DamageCost cannot exceed 100000.");
+        if (request.DamageCost > MaxAmount)
+            errors.Add($"DamageCost cannot exceed {MaxAmount}.");
 
         if (errors.Count > 0)
             throw new ValidationException(errors);

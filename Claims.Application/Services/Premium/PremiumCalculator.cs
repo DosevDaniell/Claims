@@ -1,51 +1,61 @@
-﻿using Claims.Domain.Enums;
-
-namespace Claims.Application.Services.Premium;
+﻿using Claims.Application.Services.Premium;
+using Claims.Domain.Enums;
 
 public sealed class PremiumCalculator : IPremiumCalculator
 {
     private const decimal BaseDayRate = 1250m;
+    private const int FirstBandDays = 30;
+    private const int SecondBandDays = 180;
+
+    private sealed record RateConfiguration(
+        decimal Multiplier,
+        decimal SecondBandDiscount,
+        decimal ThirdBandDiscount);
+
+    private static readonly Dictionary<CoverType, RateConfiguration> RateConfigurations =
+        new()
+        {
+            {
+                CoverType.Yacht,
+                new RateConfiguration(1.10m, 0.95m, 0.92m)
+            },
+            {
+                CoverType.PassengerShip,
+                new RateConfiguration(1.20m, 0.98m, 0.97m)
+            },
+            {
+                CoverType.Tanker,
+                new RateConfiguration(1.50m, 0.98m, 0.97m)
+            }
+        };
 
     public decimal ComputePremium(DateTime startDate, DateTime endDate, CoverType coverType)
     {
-        var multiplier = GetMultiplier(coverType);
+        var config = RateConfigurations.TryGetValue(coverType, out var value)
+            ? value
+            : new RateConfiguration(1.30m, 0.98m, 0.97m);
 
-        var dailyRate = BaseDayRate * multiplier;
+        var dailyRate = BaseDayRate * config.Multiplier;
         var totalDays = (endDate - startDate).Days;
 
         decimal total = 0;
 
         for (int day = 0; day < totalDays; day++)
         {
-            var rate = ApplyDiscount(day, dailyRate, coverType);
-            total += rate;
+            total += ApplyDiscount(day, dailyRate, config);
         }
 
         return total;
     }
 
-    private static decimal GetMultiplier(CoverType coverType)
+    private static decimal ApplyDiscount(int day, decimal dailyRate, RateConfiguration config)
     {
-        return coverType switch
-        {
-            CoverType.Yacht => 1.1m,
-            CoverType.PassengerShip => 1.2m,
-            CoverType.Tanker => 1.5m,
-            _ => 1.3m
-        };
-    }
-
-    private static decimal ApplyDiscount(int day, decimal dailyRate, CoverType coverType)
-    {
-        bool isYacht = coverType == CoverType.Yacht;
-
-        if (day < 30)
+        if (day < FirstBandDays)
             return dailyRate;
 
-        if (day < 180)
-            return dailyRate * (isYacht ? 0.95m : 0.98m);
+        if (day < SecondBandDays)
+            return dailyRate * config.SecondBandDiscount;
 
-        return dailyRate * (isYacht ? 0.92m : 0.97m);
-
+        return dailyRate * config.ThirdBandDiscount;
     }
 }

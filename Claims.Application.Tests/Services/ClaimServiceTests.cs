@@ -150,4 +150,25 @@ public sealed class ClaimServiceTests
         Assert.Single(auditQueue.Events);
         Assert.Equal("DELETE", auditQueue.Events[0].Action);
     }
+
+    [Fact]
+    public async Task CreateAsync_ThrowsValidation_WhenCreatedDateOutsideCoverPeriod()
+    {
+        var (service, _, _, today) =
+            CreateSut(new DateTime(2026, 12, 31, 0, 0, 0, DateTimeKind.Utc));
+
+        var request = ValidRequest(today) with
+        {
+            Cover = new CoverDto(
+                PolicyNumber: "POL-123456",
+                CoverageStart: new DateOnly(2026, 1, 1),
+                CoverageEnd: new DateOnly(2026, 6, 1),
+                MaxAmount: 5000,
+                Currency: "EUR",
+                CoverType: CoverType.Yacht)
+        };
+
+        await Assert.ThrowsAsync<ValidationException>(
+            () => service.CreateAsync(request, CancellationToken.None));
+    }
 }

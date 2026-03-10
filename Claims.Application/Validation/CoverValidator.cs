@@ -7,6 +7,7 @@ namespace Claims.Application.Validation;
 public sealed class CoverValidator : ICoverValidator
 {
     private readonly IClock _clock;
+    private const int MaxInsurancePeriodYears = 1;
 
     public CoverValidator(IClock clock)
     {
@@ -32,8 +33,8 @@ public sealed class CoverValidator : ICoverValidator
         if (cover.CoverageStart < today)
             errors.Add("CoverageStart cannot be in the past.");
 
-        if (cover.CoverageEnd > cover.CoverageStart.AddYears(1))
-            errors.Add("Insurance period cannot exceed 1 year.");
+        if (cover.CoverageEnd > cover.CoverageStart.AddYears(MaxInsurancePeriodYears))
+            errors.Add($"Insurance period cannot exceed {MaxInsurancePeriodYears} year.");
 
         if (errors.Count > 0)
             throw new ValidationException(errors);

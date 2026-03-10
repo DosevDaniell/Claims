@@ -19,7 +19,7 @@ public sealed class ClaimService : IClaimService
         ICoverValidator coverValidator,
         IClaimValidator claimValidator,
         IClock clock,
-    IAuditQueue auditQueue)
+        IAuditQueue auditQueue)
     {
         _store = store;
         _coverValidator = coverValidator;
@@ -28,11 +28,22 @@ public sealed class ClaimService : IClaimService
         _auditQueue = auditQueue;
     }
 
-    public async Task<ClaimDto> CreateAsync(CreateClaimRequest request, CancellationToken ct)
+    public async Task<InsuranceClaim> CreateAsync(CreateClaimRequest request, CancellationToken ct)
     {
         _coverValidator.ValidateOrThrow(request.Cover);
-
         _claimValidator.ValidateOrThrow(request);
+
+        var nowUtc = _clock.UtcNow;
+        var createdDate = DateOnly.FromDateTime(nowUtc);
+
+        if (createdDate < request.Cover.CoverageStart ||
+            createdDate > request.Cover.CoverageEnd)
+        {
+            throw new ValidationException(new[]
+            {
+                "Created date must be within the cover period."
+            });
+        }
 
         var cover = new Cover(
             request.Cover.PolicyNumber,
@@ -49,7 +60,7 @@ public sealed class ClaimService : IClaimService
             request.Description.Trim(),
             request.IncidentDate,
             cover,
-            _clock.UtcNow);
+            nowUtc);
 
         await _store.AddAsync(claim, ct);
 
@@ -57,34 +68,16 @@ public sealed class ClaimService : IClaimService
             new AuditEvent(
                 Action: "CREATE",
                 ClaimId: claim.Id,
-                OccurredAtUtc: _clock.UtcNow,
+                OccurredAtUtc: nowUtc,
                 Description: $"Claim created for policy {claim.Cover.PolicyNumber}"),
             ct);
 
-        return new ClaimDto(
-            claim.Id,
-            claim.ClaimType,
-            claim.DamageCost,
-            claim.Description,
-            claim.IncidentDate,
-            claim.Cover.PolicyNumber,
-            claim.CreatedAtUtc);
+        return claim;
     }
 
-    public async Task<IReadOnlyList<ClaimDto>> ListAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<InsuranceClaim>> ListAsync(CancellationToken ct)
     {
-        var claims = await _store.ListAsync(ct);
-
-        return claims
-            .Select(c => new ClaimDto(
-                c.Id,
-                c.ClaimType,
-                c.DamageCost,
-                c.Description,
-                c.IncidentDate,
-                c.Cover.PolicyNumber,
-                c.CreatedAtUtc))
-            .ToList();
+        return await _store.ListAsync(ct);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
@@ -103,5 +96,5 @@ public sealed class ClaimService : IClaimService
                 OccurredAtUtc: _clock.UtcNow,
                 Description: "Claim deleted"),
             ct);
-            }
+    }
 }

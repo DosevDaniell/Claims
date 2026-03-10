@@ -1,4 +1,5 @@
 using Claims.API.BackgroundServices;
+using Claims.API.Infrastructure;
 using Claims.API.Middleware;
 using Claims.Application.Interfaces;
 using Claims.Application.Models;
@@ -15,8 +16,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
+    options.IncludeXmlComments(xmlPath);
+});
 
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton<IClaimStore, InMemoryClaimStore>();
@@ -41,9 +47,8 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.MapControllers();
 
-app.MapGet("/", () => Results.Redirect("/swagger"));
+// app.MapGet("/", () => Results.Redirect("/swagger"));
 app.Run();
-public sealed class SystemClock : IClock
-{
-    public DateTime UtcNow => DateTime.UtcNow;
-}
+
+
+
