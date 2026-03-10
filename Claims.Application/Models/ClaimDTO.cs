@@ -2,7 +2,7 @@
 
 namespace Claims.Application.Models;
 
-public sealed record ClaimDto(
+public sealed record ClaimDTO(
     Guid Id,
     ClaimType ClaimType,
     decimal DamageCost,

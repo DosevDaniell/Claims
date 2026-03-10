@@ -6,4 +6,4 @@ public sealed record CreateClaimRequest(
     decimal DamageCost,
     string Description,
     DateOnly IncidentDate,
-    CoverDto Cover);
+    CoverDTO Cover);

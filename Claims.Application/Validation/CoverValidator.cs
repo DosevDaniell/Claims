@@ -13,7 +13,7 @@ public sealed class CoverValidator : ICoverValidator
     {
         _clock = clock;
     }
-    public void ValidateOrThrow(CoverDto cover)
+    public void ValidateOrThrow(CoverDTO cover)
     {
         var errors = new List<string>();
 

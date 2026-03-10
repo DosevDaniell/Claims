@@ -11,5 +11,5 @@ public interface ICoverValidator
     /// <exception cref="ValidationException">
     /// Thrown when one or more validation ruler are violated
     /// </exception>
-    void ValidateOrThrow(CoverDto cover);
+    void ValidateOrThrow(CoverDTO cover);
 }

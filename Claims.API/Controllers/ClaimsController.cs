@@ -22,7 +22,7 @@ public sealed class ClaimsController : ControllerBase
     /// <param name="ct">Cancellation token</param>
     /// <returns>The created claim</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(ClaimDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ClaimDTO), StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] CreateClaimRequest request, CancellationToken ct)
     {
         var claim = await _service.CreateAsync(request, ct);
@@ -38,7 +38,7 @@ public sealed class ClaimsController : ControllerBase
     /// <param name="ct">Cancellation token</param>
     /// <returns>A list of existing claims</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(List<ClaimDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<ClaimDTO>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(CancellationToken ct)
     {
         var claims = await _service.ListAsync(ct);
@@ -60,9 +60,9 @@ public sealed class ClaimsController : ControllerBase
         await _service.DeleteAsync(id, ct);
         return NoContent();
     }
-    private static ClaimDto MapToDto(InsuranceClaim claim)
+    private static ClaimDTO MapToDto(InsuranceClaim claim)
     {
-        return new ClaimDto(
+        return new ClaimDTO(
             claim.Id,
             claim.ClaimType,
             claim.DamageCost,

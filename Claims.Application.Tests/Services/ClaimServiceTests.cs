@@ -28,7 +28,7 @@ public sealed class ClaimServiceTests
         return (service, store, auditQueue, today);
     }
 
-    private static CoverDto ValidCover(DateTime today) =>
+    private static CoverDTO ValidCover(DateTime today) =>
         new(
             PolicyNumber: "POL-123456",
             CoverageStart: DateOnly.FromDateTime(today),
@@ -159,7 +159,7 @@ public sealed class ClaimServiceTests
 
         var request = ValidRequest(today) with
         {
-            Cover = new CoverDto(
+            Cover = new CoverDTO(
                 PolicyNumber: "POL-123456",
                 CoverageStart: new DateOnly(2026, 1, 1),
                 CoverageEnd: new DateOnly(2026, 6, 1),
